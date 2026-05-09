@@ -654,19 +654,7 @@ def injecter_style() -> None:
                 color: white;
             }}
 
-            .stTextInput input, .stNumberInput input, .stDateInput input, .stTimeInput input, textarea {{
-                border-radius: 16px !important;
-                border: 1px solid var(--bordure) !important;
-                background: rgba(255,255,255,0.92) !important;
-                min-height: 3rem !important;
-                color: var(--texte) !important;
-                box-shadow: 0 8px 18px rgba(119, 76, 96, 0.035);
-            }}
 
-            .stTextInput input:focus, .stNumberInput input:focus, .stDateInput input:focus, .stTimeInput input:focus, textarea:focus {{
-                border-color: var(--rose) !important;
-                box-shadow: 0 0 0 3px rgba(232,175,198,0.20) !important;
-            }}
 
             section[data-testid="stSidebar"] {{
                 background:
@@ -716,6 +704,8 @@ def injecter_style() -> None:
                 box-shadow: 0 18px 42px rgba(119, 76, 96, 0.07) !important;
                 padding: 1.3rem !important;
             }}
+
+
 
             .stAlert, .stDataFrame {{
                 display: none;
@@ -775,7 +765,7 @@ def afficher_citation(nombre: int = 1) -> None:
         st.markdown(
             f"""
             <div class="quote-card">
-                <strong>Note d’Athéna</strong><br>
+                <strong>Conseils</strong><br>
                 <span>{citation}</span>
             </div>
             """,
@@ -1487,3 +1477,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
