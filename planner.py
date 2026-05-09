@@ -778,7 +778,7 @@ def afficher_examen_card(examen: Examen) -> None:
     st.markdown(
         f"""
         <div class="exam-card">
-            <div class="exam-title">📁 {examen.matiere}</div>
+            <div class="exam-title">{examen.matiere}</div>
             <div class="exam-meta">Examen le {format_date_fr(examen.date_examen)} · {statut}</div>
             <span class="mini-tag">{examen.ects:.1f} ECTS</span>
             <span class="mini-tag">{examen.heures_totales:.1f} h totales</span>
