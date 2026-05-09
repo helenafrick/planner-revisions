@@ -775,7 +775,7 @@ def afficher_citation(nombre: int = 1) -> None:
         st.markdown(
             f"""
             <div class="quote-card">
-                <strong>Conseil</strong><br>
+                <strong>Note d’Athéna</strong><br>
                 <span>{citation}</span>
             </div>
             """,
@@ -788,7 +788,7 @@ def afficher_examen_card(examen: Examen) -> None:
     st.markdown(
         f"""
         <div class="exam-card">
-            <div class="exam-title">{examen.matiere}</div>
+            <div class="exam-title">📁 {examen.matiere}</div>
             <div class="exam-meta">Examen le {format_date_fr(examen.date_examen)} · {statut}</div>
             <span class="mini-tag">{examen.ects:.1f} ECTS</span>
             <span class="mini-tag">{examen.heures_totales:.1f} h totales</span>
@@ -1016,29 +1016,29 @@ def generer_agenda(
 def afficher_authentification() -> None:
     header_page(
         "Planning de révisions",
+        "Un espace doux, rosé et structuré pour organiser tes examens avec calme, élégance et ambition.",
         "Bienvenue",
     )
 
-    with st.container(border=True):
-        st.markdown("### Entrer dans mon espace")
-        with st.form("connexion_simple"):
-            username = st.text_input("Nom d’utilisateur", key="simple_username")
-            submit = st.form_submit_button("Continuer", use_container_width=True)
+    st.markdown("### Entrer dans mon espace")
+    with st.form("connexion_simple"):
+        username = st.text_input("Nom d’utilisateur", key="simple_username")
+        submit = st.form_submit_button("Continuer", use_container_width=True)
 
-        if submit:
-            succes, message, user_id = creer_ou_recuperer_utilisateur(username)
+    if submit:
+        succes, message, user_id = creer_ou_recuperer_utilisateur(username)
 
-            if not succes or user_id is None:
-                afficher_message(message, "Connexion")
-            else:
-                st.session_state.user_id = user_id
-                st.session_state.username = username.strip()
-                st.rerun()
+        if not succes or user_id is None:
+            afficher_message(message, "Connexion")
+        else:
+            st.session_state.user_id = user_id
+            st.session_state.username = username.strip()
+            st.rerun()
 
-        st.markdown(
-            '<p class="subtle">Si le nom existe déjà, tu retrouves tes anciennes entrées. Sinon, un nouvel espace est créé automatiquement.</p>',
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        '<p class="subtle">Si le nom existe déjà, tu retrouves tes anciennes entrées. Sinon, un nouvel espace est créé automatiquement.</p>',
+        unsafe_allow_html=True,
+    )
 
 
 def afficher_indicateurs(examens: list[Examen]) -> None:
@@ -1110,118 +1110,125 @@ def page_examens(examens: list[Examen]) -> None:
     gauche, droite = st.columns([1, 1.15], gap="large")
 
     with gauche:
-        with st.container(border=True):
-            st.markdown("### Ajouter un examen")
+        st.markdown("### Ajouter un examen")
 
-            with st.form("ajout_examen", clear_on_submit=True):
-                matiere = st.text_input("Nom de la matière", placeholder="Ex. Finance publique")
-                date_examen = st.date_input(
-                    "Date de l’examen",
-                    value=date.today() + timedelta(days=10),
-                    format="DD/MM/YYYY",
+        with st.form("ajout_examen", clear_on_submit=True):
+            matiere = st.text_input("Nom de la matière", placeholder="Ex. Finance publique")
+            date_examen = st.date_input(
+                "Date de l’examen",
+                value=date.today() + timedelta(days=10),
+                format="DD/MM/YYYY",
+            )
+            ects = st.number_input(
+                "Nombre d’ECTS",
+                min_value=0.5,
+                max_value=30.0,
+                value=3.0,
+                step=0.5,
+            )
+            heures_effectuees = st.number_input(
+                "Heures déjà travaillées",
+                min_value=0.0,
+                max_value=500.0,
+                value=0.0,
+                step=0.5,
+            )
+
+            total_calcule = ects * HEURES_PAR_ECTS
+            restant_calcule = max(0.0, total_calcule - heures_effectuees)
+
+            st.markdown(
+                f"""
+                <div class="soft-message">
+                    <div class="soft-message-title">Calcul des heures</div>
+                    {ects:.1f} ECTS = {total_calcule:.1f} h de travail · {restant_calcule:.1f} h restantes.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            submit = st.form_submit_button("Enregistrer l’examen", use_container_width=True)
+
+        if submit:
+            if not matiere.strip():
+                afficher_message("Entre d’abord le nom de la matière.", "Champ manquant")
+            else:
+                ajouter_examen_db(
+                    st.session_state.user_id,
+                    matiere,
+                    date_examen,
+                    ects,
+                    min(heures_effectuees, total_calcule),
                 )
-                ects = st.number_input(
-                    "Nombre d’ECTS",
-                    min_value=0.5,
-                    max_value=30.0,
-                    value=3.0,
-                    step=0.5,
-                )
-                heures_effectuees = st.number_input(
-                    "Heures déjà travaillées",
-                    min_value=0.0,
-                    max_value=500.0,
-                    value=0.0,
-                    step=0.5,
-                )
-
-                total_calcule = ects * HEURES_PAR_ECTS
-                restant_calcule = max(0.0, total_calcule - heures_effectuees)
-
-                submit = st.form_submit_button("Enregistrer l’examen", use_container_width=True)
-
-            if submit:
-                if not matiere.strip():
-                    afficher_message("Entre d’abord le nom de la matière.", "Champ manquant")
-                else:
-                    ajouter_examen_db(
-                        st.session_state.user_id,
-                        matiere,
-                        date_examen,
-                        ects,
-                        min(heures_effectuees, total_calcule),
-                    )
-                    st.session_state.agenda_genere = pd.DataFrame()
-                    st.rerun()
+                st.session_state.agenda_genere = pd.DataFrame()
+                st.rerun()
 
     with droite:
-        with st.container(border=True):
-            st.markdown("### Résumé")
+        st.markdown("### Résumé")
 
-            if not examens:
-                afficher_message("Aucun examen enregistré pour l’instant.", "Résumé vide")
-            else:
-                for examen in examens:
-                    afficher_examen_card(examen)
+        if not examens:
+            afficher_message("Aucun examen enregistré pour l’instant.", "Résumé vide")
+        else:
+            for examen in examens:
+                afficher_examen_card(examen)
 
-                    col_a, col_b = st.columns([1.15, 0.85], gap="medium")
+                col_a, col_b = st.columns([1.15, 0.85], gap="medium")
 
-                    with col_a:
-                        nouvelles_heures = st.number_input(
-                            f"Heures déjà effectuées · {examen.matiere}",
-                            min_value=0.0,
-                            max_value=float(examen.heures_totales),
-                            value=float(min(examen.heures_effectuees, examen.heures_totales)),
-                            step=0.5,
-                            key=f"progression_{examen.id}",
+                with col_a:
+                    nouvelles_heures = st.number_input(
+                        f"Heures déjà effectuées · {examen.matiere}",
+                        min_value=0.0,
+                        max_value=float(examen.heures_totales),
+                        value=float(min(examen.heures_effectuees, examen.heures_totales)),
+                        step=0.5,
+                        key=f"progression_{examen.id}",
+                    )
+
+                with col_b:
+                    st.write("")
+                    st.write("")
+
+                    if st.button("Mettre à jour", use_container_width=True, key=f"maj_{examen.id}"):
+                        mettre_a_jour_heures_db(
+                            examen.id,
+                            st.session_state.user_id,
+                            nouvelles_heures,
                         )
+                        st.session_state.agenda_genere = pd.DataFrame()
+                        st.rerun()
 
-                    with col_b:
-                        st.write("")
-                        st.write("")
-
-                        if st.button("Mettre à jour", use_container_width=True, key=f"maj_{examen.id}"):
-                            mettre_a_jour_heures_db(
-                                examen.id,
-                                st.session_state.user_id,
-                                nouvelles_heures,
-                            )
-                            st.session_state.agenda_genere = pd.DataFrame()
-                            st.rerun()
-
-                        if st.button("Supprimer", use_container_width=True, key=f"supprimer_{examen.id}"):
-                            supprimer_examen_db(examen.id, st.session_state.user_id)
-                            st.session_state.agenda_genere = pd.DataFrame()
-                            st.rerun()
+                    if st.button("Supprimer", use_container_width=True, key=f"supprimer_{examen.id}"):
+                        supprimer_examen_db(examen.id, st.session_state.user_id)
+                        st.session_state.agenda_genere = pd.DataFrame()
+                        st.rerun()
 
 
 def parametres_agenda() -> tuple[float, float, int, bool]:
-    with st.container(border=True):
-        st.markdown("### Paramètres de génération")
+    st.markdown("### Paramètres de génération")
 
-        heures_semaine = st.number_input(
-            "Temps de révision par jour en semaine",
-            min_value=1.0,
-            max_value=14.0,
-            value=3.0,
-            step=0.5,
-        )
-        heures_weekend = st.number_input(
-            "Temps de révision par jour le week-end",
-            min_value=1.0,
-            max_value=14.0,
-            value=4.5,
-            step=0.5,
-        )
-        duree_creneau = st.number_input(
-            "Durée d’un créneau (minutes)",
-            min_value=30,
-            max_value=180,
-            value=60,
-            step=15,
-        )
+    heures_semaine = st.number_input(
+        "Temps de révision par jour en semaine",
+        min_value=1.0,
+        max_value=14.0,
+        value=3.0,
+        step=0.5,
+    )
+    heures_weekend = st.number_input(
+        "Temps de révision par jour le week-end",
+        min_value=1.0,
+        max_value=14.0,
+        value=4.5,
+        step=0.5,
+    )
+    duree_creneau = st.number_input(
+        "Durée d’un créneau (minutes)",
+        min_value=30,
+        max_value=180,
+        value=60,
+        step=15,
+    )
 
-        lancer = st.button("Générer mon agenda visuel", use_container_width=True)
+    lancer = st.button("Générer mon agenda visuel", use_container_width=True)
 
     return heures_semaine, heures_weekend, duree_creneau, lancer
 
@@ -1251,7 +1258,7 @@ def afficher_agenda_visuel(df_agenda: pd.DataFrame) -> None:
 
     with col_prev:
         if st.button(
-            "Jour précédent",
+            "<",
             use_container_width=True,
             disabled=st.session_state.agenda_jour_index == 0,
         ):
@@ -1272,7 +1279,7 @@ def afficher_agenda_visuel(df_agenda: pd.DataFrame) -> None:
 
     with col_next:
         if st.button(
-            "Jour suivant",
+            ">",
             use_container_width=True,
             disabled=st.session_state.agenda_jour_index >= len(jours) - 1,
         ):
@@ -1281,6 +1288,12 @@ def afficher_agenda_visuel(df_agenda: pd.DataFrame) -> None:
 
     for _, ligne in groupe.iterrows():
         afficher_bloc_agenda(ligne)
+
+    with st.container(border=True):
+        st.markdown("### Vue compacte des jours")
+        chips = [f'<span class="mini-tag">{jour}</span>' for jour, _ in jours]
+        st.markdown("".join(chips), unsafe_allow_html=True)
+
 
 def page_agenda(examens: list[Examen]) -> None:
     header_page(
@@ -1300,56 +1313,55 @@ def page_agenda(examens: list[Examen]) -> None:
     with gauche:
         heures_semaine, heures_weekend, duree_creneau, lancer = parametres_agenda()
 
-        with st.container(border=True):
-            st.markdown("### Mes indisponibilités")
+        st.markdown("### Mes indisponibilités")
 
-            with st.form("ajout_indisponibilite", clear_on_submit=True):
-                date_indispo = st.date_input(
-                    "Date indisponible",
-                    value=date.today(),
-                    format="DD/MM/YYYY",
-                    key="date_indispo",
+        with st.form("ajout_indisponibilite", clear_on_submit=True):
+            date_indispo = st.date_input(
+                "Date indisponible",
+                value=date.today(),
+                format="DD/MM/YYYY",
+                key="date_indispo",
+            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                heure_debut = st.time_input("Heure de début", value=time(hour=12, minute=0), step=900)
+
+            with col2:
+                heure_fin = st.time_input("Heure de fin", value=time(hour=14, minute=0), step=900)
+
+            note = st.text_input("Note optionnelle", placeholder="Cours, travail, rendez-vous")
+            ajouter = st.form_submit_button("Ajouter cette indisponibilité", use_container_width=True)
+
+        if ajouter:
+            if heure_fin <= heure_debut:
+                afficher_message("L’heure de fin doit être après l’heure de début.", "Indisponibilité")
+            else:
+                ajouter_indisponibilite_db(
+                    st.session_state.user_id,
+                    date_indispo,
+                    heure_debut,
+                    heure_fin,
+                    note,
                 )
+                st.session_state.agenda_genere = pd.DataFrame()
+                st.rerun()
 
-                col1, col2 = st.columns(2)
+        if indisponibilites:
+            for indispo in indisponibilites:
+                afficher_indisponibilite_card(indispo)
 
-                with col1:
-                    heure_debut = st.time_input("Heure de début", value=time(hour=12, minute=0), step=900)
-
-                with col2:
-                    heure_fin = st.time_input("Heure de fin", value=time(hour=14, minute=0), step=900)
-
-                note = st.text_input("Note optionnelle", placeholder="Cours, travail, rendez-vous")
-                ajouter = st.form_submit_button("Ajouter cette indisponibilité", use_container_width=True)
-
-            if ajouter:
-                if heure_fin <= heure_debut:
-                    afficher_message("L’heure de fin doit être après l’heure de début.", "Indisponibilité")
-                else:
-                    ajouter_indisponibilite_db(
-                        st.session_state.user_id,
-                        date_indispo,
-                        heure_debut,
-                        heure_fin,
-                        note,
-                    )
+                if st.button(
+                    "Supprimer ce bloc",
+                    key=f"indispo_{indispo.id}",
+                    use_container_width=False,
+                ):
+                    supprimer_indisponibilite_db(indispo.id, st.session_state.user_id)
                     st.session_state.agenda_genere = pd.DataFrame()
                     st.rerun()
-
-            if indisponibilites:
-                for indispo in indisponibilites:
-                    afficher_indisponibilite_card(indispo)
-
-                    if st.button(
-                        "Supprimer ce bloc",
-                        key=f"indispo_{indispo.id}",
-                        use_container_width=False,
-                    ):
-                        supprimer_indisponibilite_db(indispo.id, st.session_state.user_id)
-                        st.session_state.agenda_genere = pd.DataFrame()
-                        st.rerun()
-            else:
-                afficher_message("Aucune indisponibilité enregistrée pour le moment.", "Disponibilité")
+        else:
+            afficher_message("Aucune indisponibilité enregistrée pour le moment.", "Disponibilité")
 
     with droite:
         if lancer:
