@@ -1282,12 +1282,6 @@ def afficher_agenda_visuel(df_agenda: pd.DataFrame) -> None:
     for _, ligne in groupe.iterrows():
         afficher_bloc_agenda(ligne)
 
-    with st.container(border=True):
-        st.markdown("### Vue compacte des jours")
-        chips = [f'<span class="mini-tag">{jour}</span>' for jour, _ in jours]
-        st.markdown("".join(chips), unsafe_allow_html=True)
-
-
 def page_agenda(examens: list[Examen]) -> None:
     header_page(
         "Mon agenda de révisions",
